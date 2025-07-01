@@ -1,0 +1,375 @@
+/* Estilos para TourEditor */
+.tour-editor {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+}
+
+.three-container {
+  position: absolute;
+  top: 0; left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 1;
+  background: #1e293b;
+}
+
+/* Nuevo diseño para el panel de control */
+.editor-controls {
+  position: absolute;
+  top: 0;
+  right: 0;
+  height: 100vh;
+  width: 340px;
+  z-index: 10;
+  background: rgba(15,23,42,0.97);
+  box-shadow: -4px 0 24px rgba(0,0,0,0.18);
+  padding: 32px 28px 24px 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  border-top-left-radius: 18px;
+  border-bottom-left-radius: 18px;
+  transition: box-shadow 0.2s;
+}
+
+@media (max-width: 900px) {
+  .editor-controls {
+    width: 90vw;
+    min-width: 0;
+    padding: 18px 10px 18px 10px;
+  }
+}
+
+@media (max-width: 600px) {
+  .editor-controls {
+    width: 100vw;
+    left: 0;
+    right: 0;
+    border-radius: 0;
+    padding: 12px 4vw;
+    height: auto;
+    min-height: 0;
+    max-height: 90vh;
+    overflow-y: auto;
+  }
+}
+
+.editor-controls h3,
+.editor-controls h2 {
+  color: #38bdf8;
+  margin-bottom: 12px;
+  font-size: 1.3rem;
+  font-weight: 600;
+}
+
+.editor-controls label {
+  color: #e2e8f0;
+  font-size: 1rem;
+  margin-bottom: 6px;
+  display: block;
+}
+
+.editor-controls input,
+.editor-controls textarea,
+.editor-controls select {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 6px;
+  border: 1px solid #334155;
+  background: #1e293b;
+  color: #e2e8f0;
+  margin-bottom: 10px;
+  font-size: 1rem;
+}
+
+.editor-controls input:focus,
+.editor-controls textarea:focus,
+.editor-controls select:focus {
+  outline: none;
+  border-color: #38bdf8;
+  box-shadow: 0 0 0 2px rgba(56,189,248,0.15);
+}
+
+.editor-controls button,
+.editor-controls .btn-upload,
+.editor-controls .btn-add-hotspot {
+  background: #38bdf8;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 12px 0;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  margin-bottom: 8px;
+  transition: background 0.2s;
+  width: 100%;
+}
+
+.editor-controls button:hover {
+  background: #0284c7;
+}
+
+.editor-controls .scene-manager {
+  margin-bottom: 18px;
+}
+
+/* DragDrop area inside editor */
+.drag-drop-area {
+  border: 2px dashed #38bdf8;
+  border-radius: 8px;
+  background: rgba(56,189,248,0.07);
+  padding: 18px 0;
+  margin: 8px 0;
+  text-align: center;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s;
+}
+.drag-drop-area:hover {
+  background: rgba(56,189,248,0.13);
+  border-color: #0284c7;
+}
+.drag-drop-content {
+  color: #38bdf8;
+  font-size: 1.1rem;
+}
+.upload-icon {
+  font-size: 2rem;
+  margin-bottom: 6px;
+  display: block;
+}
+
+.editor-panel {
+  position: absolute;
+  top: 0;
+  right: 0;
+  height: 100vh;
+  width: 370px;
+  background: #181c23;
+  color: #fff;
+  z-index: 20;
+  box-shadow: -4px 0 24px rgba(0,0,0,0.18);
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.3s cubic-bezier(.4,2,.6,1), box-shadow 0.2s;
+  border-top-left-radius: 12px;
+  border-bottom-left-radius: 12px;
+  transform: translateX(0);
+}
+
+.editor-panel:not(.open) {
+  transform: translateX(100%);
+  box-shadow: none;
+}
+
+.panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 22px 22px 10px 28px;
+  border-bottom: 1px solid #23272f;
+}
+
+.panel-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #fff;
+}
+
+.panel-toggle {
+  background: #23272f;
+  border: none;
+  color: #38bdf8;
+  font-size: 1.5rem;
+  border-radius: 50%;
+  width: 36px;
+  height: 36px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s;
+}
+.panel-toggle:hover {
+  background: #38bdf8;
+  color: #fff;
+}
+
+.panel-toggle-collapsed {
+  position: absolute;
+  top: 40px;
+  right: 0;
+  z-index: 30;
+  background: #23272f;
+  color: #38bdf8;
+  border: none;
+  border-radius: 0 8px 8px 0;
+  width: 38px;
+  height: 56px;
+  font-size: 1.7rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: -2px 2px 10px rgba(0,0,0,0.13);
+  transition: background 0.2s, color 0.2s;
+}
+.panel-toggle-collapsed:hover {
+  background: #38bdf8;
+  color: #fff;
+}
+
+.panel-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 18px 28px 18px 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.api-key-btn {
+  background: #2563eb;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 0;
+  font-size: 1rem;
+  font-weight: 500;
+  margin-bottom: 18px;
+  cursor: pointer;
+  width: 100%;
+  transition: background 0.2s;
+}
+.api-key-btn:hover {
+  background: #1d4ed8;
+}
+
+.panel-section {
+  margin-bottom: 18px;
+}
+
+.panel-section h3 {
+  font-size: 1.08rem;
+  font-weight: 600;
+  margin-bottom: 10px;
+  color: #38bdf8;
+}
+
+.panel-dragdrop-hint {
+  color: #a3a3a3;
+  font-size: 0.98rem;
+  margin: 8px 0 0 0;
+  text-align: center;
+}
+
+.panel-empty {
+  color: #a3a3a3;
+  font-size: 0.98rem;
+  margin: 8px 0;
+}
+
+.panel-image-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.panel-image-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 7px 0;
+  cursor: pointer;
+  border-radius: 6px;
+  transition: background 0.15s;
+}
+.panel-image-item.active,
+.panel-image-item:hover {
+  background: #23272f;
+}
+.panel-image-item img {
+  width: 38px;
+  height: 38px;
+  object-fit: cover;
+  border-radius: 6px;
+  background: #23272f;
+  border: 1px solid #23272f;
+}
+.panel-image-item span {
+  color: #e2e8f0;
+  font-size: 1rem;
+  font-weight: 500;
+}
+
+.panel-hint {
+  font-size: 0.97rem;
+  color: #a3a3a3;
+  border-top: 1px solid #23272f;
+  padding-top: 12px;
+  margin-top: 10px;
+}
+
+.btn-add-hotspot {
+  background: #38bdf8;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 12px 0;
+  font-size: 1rem;
+  font-weight: 500;
+  margin-top: 10px;
+  cursor: pointer;
+  width: 100%;
+  transition: background 0.2s;
+}
+.btn-add-hotspot:hover {
+  background: #0284c7;
+}
+
+.btn-return-hub {
+  background: #23272f;
+  color: #38bdf8;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 0;
+  font-size: 1rem;
+  font-weight: 500;
+  margin-bottom: 18px;
+  cursor: pointer;
+  width: 100%;
+  transition: background 0.2s, color 0.2s;
+}
+.btn-return-hub:hover {
+  background: #38bdf8;
+  color: #181c23;
+}
+
+@media (max-width: 900px) {
+  .editor-panel {
+    width: 95vw;
+    min-width: 0;
+    padding: 0;
+  }
+  .panel-content {
+    padding: 12px 8px;
+  }
+}
+
+@media (max-width: 600px) {
+  .editor-panel {
+    width: 100vw;
+    left: 0;
+    right: 0;
+    border-radius: 0;
+    padding: 0;
+    height: auto;
+    min-height: 0;
+    max-height: 100vh;
+  }
+  .panel-content {
+    padding: 8px 2vw;
+  }
+}
