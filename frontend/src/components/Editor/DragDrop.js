@@ -15,7 +15,11 @@ function DragDrop({ onFileUpload }) {
     
     const files = e.dataTransfer.files;
     if (files && files.length > 0) {
-      onFileUpload(files[0]);
+      if (files.length === 1) {
+        onFileUpload(files[0]);
+      } else {
+        onFileUpload(Array.from(files));
+      }
     }
   }, [onFileUpload]);
 
@@ -25,7 +29,11 @@ function DragDrop({ onFileUpload }) {
 
   const handleFileChange = (e) => {
     if (e.target.files && e.target.files.length > 0) {
-      onFileUpload(e.target.files[0]);
+      if (e.target.files.length === 1) {
+        onFileUpload(e.target.files[0]);
+      } else {
+        onFileUpload(Array.from(e.target.files));
+      }
     }
   };
 
@@ -45,6 +53,7 @@ function DragDrop({ onFileUpload }) {
           ref={fileInputRef}
           style={{ display: 'none' }}
           onChange={handleFileChange}
+          multiple
         />
       </div>
     </div>

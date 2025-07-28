@@ -4,8 +4,8 @@ const mongoose = require('mongoose');
 const hotspotSchema = new mongoose.Schema({
   type: {
     type: String,
-    enum: ['info', 'link', 'scene'],
-    default: 'info'
+    enum: ['access', 'commerce', 'location'],
+    required: true
   },
   pitch: {
     type: Number,
@@ -15,9 +15,23 @@ const hotspotSchema = new mongoose.Schema({
     type: Number,
     required: true
   },
-  text: String,
-  url: String,
-  targetSceneId: mongoose.Schema.Types.ObjectId
+  title: {
+    type: String,
+    required: function() {
+      // Solo requerido si el tipo NO es access
+      return this.type !== 'access';
+    }
+  },
+  description: String,
+  // Para puntos de acceso
+  targetSceneId: mongoose.Schema.Types.ObjectId,
+  // Para comercios
+  socialMedia: {
+    facebook: String,
+    instagram: String,
+    twitter: String,
+    website: String
+  }
 }, { _id: true });
 
 const sceneSchema = new mongoose.Schema({
@@ -51,6 +65,10 @@ const tourSchema = new mongoose.Schema({
   createdAt: {
     type: Date,
     default: Date.now
+  },
+  localizacion: {
+    lat: { type: Number, required: true },
+    lng: { type: Number, required: true }
   }
 });
 

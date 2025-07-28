@@ -1,6 +1,7 @@
 // TourCard component
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import api from '../../services/api';
 import './TourCard.css';
 
 function getAbsoluteImageUrl(image) {
@@ -13,9 +14,28 @@ function getAbsoluteImageUrl(image) {
 
 function TourCard({ tour, onDelete }) {
   const navigate = useNavigate();
-  
+  const [productCount, setProductCount] = useState(null);
+
+  useEffect(() => {
+    let mounted = true;
+    // Obtener cantidad de productos asociados a este tour
+    api.getProductCountByTour(tour._id)
+      .then(count => {
+        if (mounted) setProductCount(count);
+      })
+      .catch(() => setProductCount(0));
+    return () => { mounted = false; };
+  }, [tour._id]);
+
   const handleEditTour = () => {
     navigate(`/editor/${tour._id}`);
+  };
+  
+  const handleDelete = (e) => {
+    e.stopPropagation();
+    if (window.confirm('¿Seguro que deseas eliminar este tour?')) {
+      onDelete && onDelete(tour._id);
+    }
   };
   
   // Contar hotspots
@@ -23,13 +43,6 @@ function TourCard({ tour, onDelete }) {
     (total, scene) => total + (scene.hotspots?.length || 0), 
     0
   );
-
-  const handleDeleteTour = (e) => {
-    e.stopPropagation();
-    if (window.confirm('¿Seguro que deseas eliminar este tour?')) {
-      onDelete && onDelete(tour._id);
-    }
-  };
 
   return (
     <div className="tour-card" onClick={handleEditTour}>
@@ -56,6 +69,9 @@ function TourCard({ tour, onDelete }) {
           <span className="tour-hotspots">
             <strong>{hotspotCount}</strong> hotspots
           </span>
+          <span className="tour-products">
+            <strong>{productCount !== null ? productCount : '-'}</strong> productos
+          </span>
         </div>
         
         <div className="tour-footer">
@@ -65,24 +81,35 @@ function TourCard({ tour, onDelete }) {
           <span className="tour-api-key">
             {tour.apiKey ? `${tour.apiKey.substring(0, 8)}...` : ''}
           </span>
+          <button
+            className="tour-shop-btn"
+            title="Ir a la tienda"
+            onClick={e => {
+              e.stopPropagation();
+              navigate(`/shop/${tour._id}`);
+            }}
+            style={{
+              background: 'none',
+              border: 'none',
+              color: '#38bdf8',
+              fontSize: '1.2rem',
+              cursor: 'pointer',
+              marginLeft: 8,
+              borderRadius: 4,
+              padding: '2px 6px',
+              transition: 'background 0.2s, color 0.2s'
+            }}
+          >
+            🛒
+          </button>
+          <button
+            className="tour-delete-btn"
+            title="Eliminar tour"
+            onClick={handleDelete}
+          >
+            🗑️
+          </button>
         </div>
-        
-        <button
-          className="btn-delete-tour"
-          onClick={handleDeleteTour}
-          style={{
-            marginTop: 10,
-            background: '#ef4444',
-            color: '#fff',
-            border: 'none',
-            borderRadius: 6,
-            padding: '8px 16px',
-            fontWeight: 500,
-            cursor: 'pointer'
-          }}
-        >
-          Eliminar Tour
-        </button>
       </div>
     </div>
   );

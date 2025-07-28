@@ -1,0 +1,58 @@
+.embed-viewer {
+  width: 100vw;
+  height: 100vh;
+  position: relative;
+  background: #181c23;
+}
+
+.three-container {
+  width: 100vw;
+  height: 100vh;
+  position: absolute;
+  top: 0; left: 0;
+  z-index: 1;
+}
+
+.scene-selector {
+  position: absolute;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 10;
+  display: flex;
+  gap: 12px;
+}
+
+.scene-btn {
+  background: #23272f;
+  color: #38bdf8;
+  border: none;
+  border-radius: 6px;
+  padding: 8px 18px;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+}
+
+.scene-btn.active,
+.scene-btn:hover {
+  background: #38bdf8;
+  color: #181c23;
+}
+
+.fade-overlay {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  width: 100vw;
+  height: 100vh;
+  background: #000;
+  opacity: 0;
+  pointer-events: none;
+  z-index: 100;
+  transition: opacity 0.45s cubic-bezier(.4,2,.6,1);
+}
+.fade-overlay.visible {
+  opacity: 0.85;
+  pointer-events: all;
+}

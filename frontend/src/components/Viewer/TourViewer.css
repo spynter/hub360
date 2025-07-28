@@ -1,0 +1,162 @@
+.tour-viewer-container {
+  width: 100vw;
+  height: 100vh;
+  position: relative;
+  background: #181c23;
+}
+
+.three-container {
+  width: 100vw;
+  height: 100vh;
+  position: absolute;
+  top: 0; left: 0;
+  z-index: 1;
+}
+
+.scene-selector {
+  position: absolute;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 10;
+  display: flex;
+  gap: 12px;
+}
+
+.scene-btn {
+  background: #23272f;
+  color: #38bdf8;
+  border: none;
+  border-radius: 6px;
+  padding: 8px 18px;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+}
+
+.scene-btn.active,
+.scene-btn:hover {
+  background: #38bdf8;
+  color: #181c23;
+}
+
+.btn-return {
+  position: absolute;
+  top: 24px;
+  left: 24px;
+  z-index: 20;
+  background: #23272f;
+  color: #38bdf8;
+  border: none;
+  border-radius: 6px;
+  padding: 10px 20px;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+}
+
+.btn-return:hover {
+  background: #38bdf8;
+  color: #181c23;
+}
+
+.viewer-loading, .viewer-error {
+  color: #38bdf8;
+  text-align: center;
+  margin-top: 40px;
+  font-size: 1.2rem;
+}
+
+.tour-viewer-container, .three-container {
+  background: #000 !important;
+}
+
+/* Botón blur gris animado para todos los botones principales del visor */
+.btn-return, .scene-btn {
+  background: rgba(40,40,40,0.7) !important;
+  color: #e2e8f0 !important;
+  border: none !important;
+  border-radius: 14px !important;
+  backdrop-filter: blur(6px) !important;
+  -webkit-backdrop-filter: blur(6px) !important;
+  box-shadow: 0 4px 24px 0 rgba(80,80,80,0.13) !important;
+  font-weight: 600;
+  font-size: 1.08rem;
+  cursor: pointer;
+  outline: none;
+  transition: background 0.22s, color 0.22s, box-shadow 0.22s, transform 0.18s;
+  display: flex;
+  align-items: center;
+}
+.btn-return:hover, .scene-btn:hover {
+  background: rgba(80,80,80,0.85) !important;
+  color: #fff !important;
+  box-shadow: 0 8px 32px 0 rgba(120,120,120,0.18) !important;
+  transform: scale(1.04);
+}
+
+.fade-overlay {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  width: 100vw;
+  height: 100vh;
+  background: #000;
+  opacity: 0;
+  pointer-events: none;
+  z-index: 100;
+  transition: opacity 0.45s cubic-bezier(.4,2,.6,1);
+}
+.fade-overlay.visible {
+  opacity: 0.85;
+  pointer-events: all;
+} 
+/* Gyroscope controls */
+.gyro-controls {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  display: flex;
+  gap: 10px;
+  z-index: 1000;
+}
+
+.gyro-toggle {
+  background: rgba(0, 0, 0, 0.7);
+  border: 2px solid #fff;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  color: white;
+  font-size: 1.2rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.gyro-toggle.active {
+  background: #2196F3;
+  border-color: #64B5F6;
+  transform: scale(1.1);
+}
+
+.gyro-toggle:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+/* Mobile optimization */
+@media (max-width: 768px) {
+  .gyro-controls {
+    bottom: 10px;
+    right: 10px;
+  }
+  
+  .gyro-toggle {
+    width: 35px;
+    height: 35px;
+    font-size: 1rem;
+  }
+}

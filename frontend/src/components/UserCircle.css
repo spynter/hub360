@@ -1,0 +1,104 @@
+.user-circle-wrapper {
+  position: relative;
+  display: inline-block;
+}
+
+.user-circle {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: #23272f;
+  color: #38bdf8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(56,189,248,0.09);
+  transition: background 0.2s, color 0.2s;
+  border: 2px solid #38bdf8;
+  overflow: hidden;
+}
+
+.user-circle:hover {
+  background: #38bdf8;
+  color: #23272f;
+}
+
+.user-photo {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+}
+
+.user-initial {
+  font-size: 1.5rem;
+  color: #38bdf8;
+}
+
+.user-popup {
+  position: absolute;
+  top: 54px;
+  right: 0;
+  background: #23272f;
+  color: #e2e8f0;
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(56,189,248,0.13);
+  min-width: 220px;
+  z-index: 100;
+  padding: 18px 18px 12px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.user-popup-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.user-popup-photo, .user-popup-initial {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: #181c23;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.3rem;
+  font-weight: 600;
+  color: #38bdf8;
+}
+
+.user-popup-name {
+  font-weight: 600;
+  color: #38bdf8;
+  font-size: 1.08rem;
+}
+
+.user-popup-email {
+  font-size: 0.97rem;
+  color: #a3a3a3;
+}
+
+.user-popup-btn {
+  background: #38bdf8;
+  color: #181c23;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 0;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  margin-bottom: 4px;
+  transition: background 0.2s, color 0.2s;
+}
+
+.user-popup-btn:hover {
+  background: #23272f;
+  color: #38bdf8;
+}

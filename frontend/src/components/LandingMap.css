@@ -1,0 +1,589 @@
+/* Estilos para el panel de detalles del mapa */
+.map-panel {
+  position: fixed;
+  top: 0;
+  right: 0;
+  height: 100vh;
+  width: 370px;
+  background: #181c23;
+  color: #fff;
+  z-index: 9999;
+  box-shadow: -4px 0 24px rgba(0,0,0,0.18);
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.3s cubic-bezier(.4,2,.6,1), box-shadow 0.2s;
+  border-top-left-radius: 12px;
+  border-bottom-left-radius: 12px;
+  transform: translateX(0);
+}
+
+.map-panel:not(.open) {
+  transform: translateX(100%);
+  box-shadow: none;
+}
+
+.panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 22px 22px 10px 28px;
+  border-bottom: 1px solid #23272f;
+}
+
+.panel-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #fff;
+}
+
+.panel-toggle {
+  background: #23272f;
+  border: none;
+  color: #38bdf8;
+  font-size: 1.5rem;
+  border-radius: 50%;
+  width: 36px;
+  height: 36px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s;
+}
+
+.panel-toggle:hover {
+  background: #38bdf8;
+  color: #fff;
+}
+
+.panel-toggle-collapsed {
+  position: fixed;
+  top: 32px;
+  right: 0;
+  z-index: 9998;
+  background: #23272f;
+  color: #38bdf8;
+  border: none;
+  border-radius: 50% 0 0 50%;
+  width: 38px;
+  height: 48px;
+  font-size: 1.7rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: -2px 2px 10px rgba(0,0,0,0.13);
+  transition: background 0.2s, color 0.2s;
+  outline: none;
+}
+
+.panel-toggle-collapsed:hover {
+  background: #38bdf8;
+  color: #181c23;
+}
+
+.panel-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 18px 28px 18px 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+/* Estilos para los detalles del tour */
+.tour-details {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.tour-thumbnail {
+  width: 100%;
+  height: 180px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #23272f;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid #23272f;
+}
+
+.tour-thumbnail img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: cover;
+  border-radius: 8px;
+  display: block;
+  background: #23272f;
+}
+
+.thumbnail-placeholder {
+  font-size: 2.5rem;
+  color: #38bdf8;
+  text-align: center;
+  width: 100%;
+}
+
+.tour-info h3 {
+  margin: 0 0 0.5rem 0;
+  font-size: 1.18rem;
+  color: #38bdf8;
+  font-weight: 600;
+}
+
+.tour-description {
+  color: #a3a3a3;
+  font-size: 1rem;
+  margin-bottom: 0.7rem;
+  line-height: 1.4;
+}
+
+.tour-meta {
+  display: flex;
+  gap: 18px;
+  margin-bottom: 0.7rem;
+  font-size: 0.98rem;
+}
+
+.tour-scenes, .tour-hotspots {
+  color: #e2e8f0;
+}
+
+.tour-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.93rem;
+  color: #a3a3a3;
+  margin-top: 0.3rem;
+  gap: 8px;
+}
+
+.tour-api-key {
+  background: #181c23;
+  color: #38bdf8;
+  border-radius: 6px;
+  padding: 2px 8px;
+  font-size: 0.92rem;
+  margin-left: 8px;
+}
+
+/* Estilos para los botones de acción */
+.tour-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.btn-view-tour, .btn-edit-tour {
+  background: #38bdf8;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 12px 0;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s;
+  width: 100%;
+}
+
+.btn-view-tour:hover, .btn-edit-tour:hover {
+  background: #0284c7;
+}
+
+.btn-edit-tour {
+  background: #23272f;
+  color: #38bdf8;
+  border: 1px solid #38bdf8;
+}
+
+.btn-edit-tour:hover {
+  background: #38bdf8;
+  color: #fff;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .map-panel {
+    width: 100%;
+    border-radius: 0;
+  }
+  
+  .panel-content {
+    padding: 16px 20px;
+  }
+  
+  .tour-thumbnail {
+    height: 150px;
+  }
+} 
+
+/* Marcadores personalizados con imagen circular */
+.custom-map-marker {
+  background: none !important;
+  border: none !important;
+}
+.circle-img-marker {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(30,30,30,0.25), 0 0 0 3px #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #23272f;
+}
+.circle-img-marker img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+  display: block;
+}
+.circle-img-marker span {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  font-size: 2rem;
+  color: #38bdf8;
+} 
+
+/* Overlay y card flotante para detalles de tienda/tour */
+.floating-card-overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(30,32,40,0.32);
+  z-index: 20000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+.floating-card {
+  background: rgba(255,255,255,0.35); /* Más transparente */
+  backdrop-filter: blur(18px) saturate(1.2);
+  -webkit-backdrop-filter: blur(18px) saturate(1.2);
+  border-radius: 18px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.22);
+  min-width: 370px;
+  max-width: 95vw;
+  min-height: 320px;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  animation: popin 0.18s cubic-bezier(.4,2,.6,1);
+  pointer-events: auto;
+}
+@keyframes popin {
+  0% { transform: scale(0.92); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
+}
+.floating-card-header {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  padding: 10px 16px 0 16px;
+  gap: 8px;
+}
+.floating-card-btn {
+  background: #f3f4f6;
+  border: none;
+  border-radius: 50%;
+  width: 36px;
+  height: 36px;
+  font-size: 1.25rem;
+  color: #23272f;
+  cursor: pointer;
+  margin-left: 4px;
+  transition: background 0.18s, color 0.18s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.floating-card-btn:hover {
+  background: #38bdf8;
+  color: #fff;
+}
+.floating-card-body {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: 12px 24px 24px 24px;
+  width: 100%;
+}
+.floating-card-main-row {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  width: 100%;
+  margin-bottom: 12px;
+}
+.floating-card-logo {
+  width: 90px;
+  height: 90px;
+  border-radius: 50%;
+  background: #e5e7eb;
+  margin-left: 0;
+  margin-right: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(30,30,30,0.13), 0 0 0 3px #fff;
+  font-size: 2.5rem;
+}
+.floating-card-logo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+  display: block;
+}
+.floating-card-info {
+  text-align: left;
+  margin-bottom: 0;
+  padding-left: 0;
+}
+.floating-card-info h2 {
+  margin: 0 0 4px 0;
+  font-size: 1.25rem;
+  color: #23272f;
+  font-weight: 700;
+  text-align: left;
+}
+.floating-card-info p {
+  margin: 0;
+  color: #6b7280;
+  font-size: 1rem;
+  text-align: left;
+}
+.floating-card-products {
+  display: flex;
+  gap: 12px;
+  width: 100%;
+  justify-content: flex-start;
+  margin-top: 10px;
+  padding-left: 2px;
+  position: relative;
+  z-index: 20;
+}
+.floating-card-product {
+  background: #f3f4f6;
+  border-radius: 10px;
+  width: 90px;
+  height: 90px;
+  flex: 0 0 90px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 4px;
+  box-shadow: 0 1px 4px rgba(30,30,30,0.07);
+  overflow: hidden;
+  margin: 0;
+}
+.floating-card-product img {
+  width: 48px;
+  height: 48px;
+  object-fit: cover;
+  border-radius: 8px;
+  margin-bottom: 4px;
+}
+.prod-name {
+  font-size: 0.98rem;
+  color: #23272f;
+  font-weight: 500;
+  text-align: center;
+  margin-bottom: 2px;
+}
+.prod-price {
+  font-size: 0.93rem;
+  color: #38bdf8;
+  font-weight: 600;
+  text-align: center;
+}
+.prod-placeholder {
+  color: #bdbdbd;
+  font-size: 1.2rem;
+  font-weight: 600;
+  text-align: center;
+} 
+
+.floating-card-social-btn {
+  width: 64px;
+  height: 64px;
+  border: none;
+  border-radius: 14px;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.6rem;
+  box-shadow: 0 4px 24px 0 rgba(30,30,30,0.18), 0 0 0 4px rgba(56,189,248,0.08);
+  background: rgba(255,255,255,0.22);
+  backdrop-filter: blur(8px) saturate(1.2);
+  -webkit-backdrop-filter: blur(8px) saturate(1.2);
+  transition: transform 0.18s cubic-bezier(.4,2,.6,1), box-shadow 0.18s, background 0.18s, filter 0.18s;
+  cursor: pointer;
+  outline: none;
+  position: relative;
+  z-index: 30;
+  filter: drop-shadow(0 0 8px rgba(56,189,248,0.10));
+}
+.floating-card-social-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  filter: none;
+}
+.floating-card-social-btn .social-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  font-size: 2.2rem;
+}
+.floating-card-social-btn .social-icon img {
+  width: 32px;
+  height: 32px;
+  object-fit: contain;
+  display: block;
+}
+.floating-card-social-btn:hover:not(:disabled) {
+  transform: scale(1.13) rotate(-2deg);
+  box-shadow: 0 8px 32px 0 rgba(30,30,30,0.28), 0 0 0 6px rgba(56,189,248,0.18);
+  filter: brightness(1.08) drop-shadow(0 0 16px rgba(56,189,248,0.18));
+  z-index: 50;
+}
+.social-web {
+  background: linear-gradient(135deg, #38bdf8 60%, #2563eb 100%);
+  color: #fff;
+}
+.social-web:hover:not(:disabled) {
+  background: linear-gradient(135deg, #2563eb 60%, #38bdf8 100%);
+}
+.social-instagram {
+  background: linear-gradient(135deg, #f58529 0%, #dd2a7b 60%, #8134af 100%);
+  color: #fff;
+}
+.social-instagram:hover:not(:disabled) {
+  background: linear-gradient(135deg, #8134af 0%, #dd2a7b 60%, #f58529 100%);
+}
+.social-whatsapp {
+  background: linear-gradient(135deg, #25d366 60%, #128c7e 100%);
+  color: #fff;
+}
+.social-whatsapp:hover:not(:disabled) {
+  background: linear-gradient(135deg, #128c7e 60%, #25d366 100%);
+} 
+
+/* Tooltips personalizados para los botones sociales */
+.floating-card-social-btn[data-tooltip]:hover:after {
+  content: attr(data-tooltip);
+  position: absolute;
+  left: 50%;
+  bottom: -18px;
+  transform: translateX(-50%) translateY(100%);
+  background: rgba(30,32,40,0.92);
+  color: #fff;
+  padding: 8px 18px;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 500;
+  white-space: pre;
+  box-shadow: 0 2px 12px rgba(30,30,30,0.18);
+  pointer-events: none;
+  z-index: 100;
+  opacity: 1;
+  transition: opacity 0.18s;
+}
+.floating-card-social-btn[data-tooltip]:not(:hover):after {
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* Sugerencias de tooltips imprescindibles:
+1. 'Visita el sitio web oficial de la tienda'
+2. 'Síguenos en Instagram para más novedades'
+3. 'Contáctanos por WhatsApp para atención inmediata'
+4. 'Haz click para abrir en una nueva pestaña'
+5. '¡No te pierdas nuestras promociones exclusivas online!'
+*/ 
+
+@keyframes spin-coin {
+  0% { transform: rotateY(0deg); }
+  100% { transform: rotateY(360deg); }
+}
+.floating-card-logo.spinning-logo {
+  animation: spin-coin 0.8s cubic-bezier(.4,2,.6,1);
+  backface-visibility: hidden;
+  perspective: 600px;
+} 
+
+.floating-card-tour-section {
+  display: flex;
+  justify-content: center;
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(0,0,0,0.08);
+}
+.floating-card-tour-btn {
+  background: linear-gradient(135deg, #38bdf8 0%, #2563eb 100%);
+  color: #fff;
+  border: none;
+  border-radius: 12px;
+  padding: 12px 24px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.18s cubic-bezier(.4,2,.6,1);
+  box-shadow: 0 4px 16px rgba(56,189,248,0.25);
+  position: relative;
+  overflow: hidden;
+}
+.floating-card-tour-btn:hover {
+  background: linear-gradient(135deg, #2563eb 0%, #38bdf8 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(56,189,248,0.35);
+}
+.floating-card-tour-btn:active {
+  transform: translateY(0);
+}
+.tour-btn-icon {
+  font-size: 1.2rem;
+  animation: spin-slow 3s linear infinite;
+}
+@keyframes spin-slow {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+.tour-btn-text {
+  font-weight: 600;
+  letter-spacing: 0.5px;
+} 
+
+/* Estilos para el polígono del centro comercial con efecto blur */
+.leaflet-overlay-pane svg path {
+  filter: blur(1px);
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+}
+
+/* Aplicar blur específico al polígono del CC */
+.leaflet-overlay-pane svg path[fill="#ff0000"] {
+  filter: blur(2px) saturate(1.2);
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
+  mix-blend-mode: multiply;
+} 
