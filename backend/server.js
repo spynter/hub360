@@ -18,11 +18,35 @@ dontenv.config();
 
 // Middleware
 app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+  origin: function (origin, callback) {
+    // Permitir requests sin origin (como mobile apps o Postman)
+    if (!origin) return callback(null, true);
+    
+    const allowedOrigins = [
+      process.env.FRONTEND_URL || 'http://localhost:3000',
+      'https://6z8k0j86-3000.use2.devtunnels.ms',
+      'https://6z8k0j86-5000.use2.devtunnels.ms'
+    ];
+    
+    // Verificar si el origin está en la lista de permitidos
+    if (allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    }
+    
+    // Permitir cualquier subdominio de devtunnels.ms
+    if (origin.includes('devtunnels.ms')) {
+      return callback(null, true);
+    }
+    
+    callback(new Error('Not allowed by CORS'));
+  },
   credentials: true
 }));
 app.use(express.json());
 app.use('/uploads', express.static('uploads')); // Servir archivos estáticos
+
+// Conectar a MongoDB
+connectDB();
 
 // Configuración de sesiones para Passport
 app.use(session({
@@ -38,9 +62,6 @@ app.use(session({
 // Inicializar Passport
 app.use(passport.initialize());
 app.use(passport.session());
-
-// Conectar a MongoDB
-connectDB();
 
 // Rutas
 app.use('/api/tours', tourRoutes);

@@ -13,6 +13,44 @@ function getAbsoluteImageUrl(image) {
   }
   return image;
 }
+// --- Utilidades y helpers para el visor, igual que en TourEditor ---
+
+function isMobileDevice() {
+  return /Android|iPhone|iPad|iPod|Opera Mini|IEMobile|WPDesktop/i.test(navigator.userAgent);
+}
+
+// Crea un sprite visual para hotspots (puedes expandirlo si agregas hotspots en el visor)
+function createHotspotSprite(hotspot) {
+  const size = 64;
+  const canvas = document.createElement('canvas');
+  canvas.width = size;
+  canvas.height = size;
+  const ctx = canvas.getContext('2d');
+  ctx.beginPath();
+  ctx.arc(size/2, size/2, size/2-4, 0, 2*Math.PI);
+  ctx.fillStyle = '#38bdf8';
+  ctx.shadowColor = '#0ea5e9';
+  ctx.shadowBlur = 8;
+  ctx.fill();
+  ctx.lineWidth = 4;
+  ctx.strokeStyle = '#fff';
+  ctx.stroke();
+  if (hotspot.type === 'access') {
+    ctx.beginPath();
+    ctx.moveTo(size/2, size/2-12);
+    ctx.lineTo(size/2+10, size/2+8);
+    ctx.lineTo(size/2-10, size/2+8);
+    ctx.closePath();
+    ctx.fillStyle = '#fff';
+    ctx.fill();
+  }
+  const texture = new THREE.CanvasTexture(canvas);
+  const material = new THREE.SpriteMaterial({ map: texture, depthTest: false });
+  const sprite = new THREE.Sprite(material);
+  sprite.scale.set(20, 20, 1);
+  sprite.userData.hotspot = hotspot;
+  return sprite;
+}
 
 function TourViewer() {
   const { tourId } = useParams();
