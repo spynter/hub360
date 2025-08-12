@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ejemplo de Tour 360° Embed</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .tour-container {
+            width: 100%;
+            height: 600px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            overflow: hidden;
+            margin-bottom: 20px;
+        }
+        .code-example {
+            background: #1e1e1e;
+            color: #d4d4d4;
+            padding: 20px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            line-height: 1.5;
+            overflow-x: auto;
+        }
+        .note {
+            background: #e3f2fd;
+            border-left: 4px solid #2196f3;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Tour 360° - Ejemplo de Incrustación</h1>
+        
+        <div class="note">
+            <strong>Nota:</strong> Reemplaza 'TU_API_KEY_AQUI' con la API key real de tu tour.
+        </div>
+
+        <!-- Contenedor del tour -->
+        <div id="tour-360-container" class="tour-container"></div>
+
+        <h2>Código para Incrustar:</h2>
+        <div class="code-example">
+&lt;div id="tour-360-container"&gt;&lt;/div&gt;
+&lt;script src="http://localhost:3000/tour-360-embed.js"&gt;&lt;/script&gt;
+&lt;script&gt;
+  Tour360.init({
+    container: 'tour-360-container',
+    apiKey: 'TU_API_KEY_AQUI'
+  });
+&lt;/script&gt;
+        </div>
+
+        <div class="note">
+            <strong>Características del nuevo sistema:</strong>
+            <ul>
+                <li>✅ No requiere iframe</li>
+                <li>✅ Carga dinámica de Three.js</li>
+                <li>✅ Soporte completo para hotspots</li>
+                <li>✅ Navegación entre escenas</li>
+                <li>✅ Responsive y adaptable</li>
+                <li>✅ Mejor rendimiento</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Script del tour -->
+    <script src="tour-360-embed.js"></script>
+    <script>
+        // Inicializar el tour (reemplaza con tu API key real)
+        Tour360.init({
+            container: 'tour-360-container',
+            apiKey: 'TU_API_KEY_AQUI'
+        });
+    </script>
+</body>
+</html> 
