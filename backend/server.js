@@ -6,7 +6,7 @@ const session = require('express-session');
 const connectDB = require('./config/db');
 const passport = require('./config/passport');
 const tourRoutes = require('./routes/tourRoutes');
-const uploadRoutes = require('./routes/uploadRoutes');
+const uploadRoutes = require('./routes/UploadRoutes');
 const productRoutes = require('./routes/productRoutes');
 const authRoutes = require('./routes/authRoutes');
 
@@ -25,7 +25,9 @@ app.use(cors({
     const allowedOrigins = [
       process.env.FRONTEND_URL || 'http://localhost:3000',
       'https://6z8k0j86-3000.use2.devtunnels.ms',
-      'https://6z8k0j86-5000.use2.devtunnels.ms'
+      'https://6z8k0j86-5000.use2.devtunnels.ms',
+      'https://6z8k0j86-5000.use2.devtunnels.ms/api',
+      'https://6z8k0j86-5000.use2.devtunnels.ms/api/tours',
     ];
     
     // Verificar si el origin está en la lista de permitidos
@@ -40,8 +42,46 @@ app.use(cors({
     
     callback(new Error('Not allowed by CORS'));
   },
-  credentials: true
+  credentials: true,
+  allowedHeaders: [
+    'Origin',
+    'X-Requested-With',
+    'Content-Type',
+    'Accept',
+    'Authorization',
+    'Access-Control-Allow-Origin',
+    'Access-Control-Allow-Headers',
+    'Access-Control-Allow-Methods'
+  ],
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  preflightContinue: false,
+  optionsSuccessStatus: 204
 }));
+
+// Middleware adicional para manejar CORS manualmente
+app.use((req, res, next) => {
+  const origin = req.headers.origin;
+  const allowedOrigins = [
+    process.env.FRONTEND_URL || 'http://localhost:3000',
+    'https://6z8k0j86-3000.use2.devtunnels.ms',
+    'https://6z8k0j86-5000.use2.devtunnels.ms'
+  ];
+  
+  if (origin && (allowedOrigins.includes(origin) || origin.includes('devtunnels.ms'))) {
+    res.header('Access-Control-Allow-Origin', origin);
+  }
+  
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization, Access-Control-Allow-Origin, Access-Control-Allow-Headers, Access-Control-Allow-Methods');
+  res.header('Access-Control-Allow-Credentials', 'true');
+  
+  if (req.method === 'OPTIONS') {
+    return res.status(204).end();
+  }
+  
+  next();
+});
+
 app.use(express.json());
 app.use('/uploads', express.static('uploads')); // Servir archivos estáticos
 

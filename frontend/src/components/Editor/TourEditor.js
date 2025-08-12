@@ -64,7 +64,7 @@ function TourEditor({ tourId }) {
   const [tour, setTour] = useState(null);
   const [currentSceneIndex, setCurrentSceneIndex] = useState(0);
   const [selectedHotspot, setSelectedHotspot] = useState(null);
-  const [isAddingHotspot, setIsAddingHotspot] = useState(false);
+
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [panelOpen, setPanelOpen] = useState(true);
@@ -95,12 +95,38 @@ function TourEditor({ tourId }) {
     const fetchTour = async () => {
       try {
         const response = await api.getTour(tourId);
-        setTour(response.data);
+        const tourData = response.data;
+        
+        // Validar y limpiar datos del tour
+        if (tourData && tourData.scenes) {
+          tourData.scenes = tourData.scenes.map((scene, sceneIndex) => {
+            if (scene.hotspots && Array.isArray(scene.hotspots)) {
+              // Limpiar hotspots inválidos
+              scene.hotspots = scene.hotspots.filter(hotspot => {
+                if (!hotspot || typeof hotspot.pitch !== 'number' || typeof hotspot.yaw !== 'number') {
+                  console.warn(`Eliminando hotspot inválido en escena ${sceneIndex}:`, hotspot);
+                  return false;
+                }
+                return true;
+              });
+            }
+            return scene;
+          });
+        }
+        
+        setTour(tourData);
         setLoading(false);
+        
+        console.log('Tour cargado:', {
+          id: tourData._id,
+          name: tourData.name,
+          scenes: tourData.scenes?.length || 0,
+          totalHotspots: tourData.scenes?.reduce((total, scene) => total + (scene.hotspots?.length || 0), 0) || 0
+        });
       } catch (err) {
         setError('Error al cargar el tour');
         setLoading(false);
-        console.error(err);
+        console.error('Error cargando tour:', err);
       }
     };
     fetchTour();
@@ -206,7 +232,7 @@ function TourEditor({ tourId }) {
     };
   }, [tour, loading]);
 
-  // Cargar la escena current
+  // Cargar la escena current con manejo optimizado de hotspots
   useEffect(() => {
     if (
       !tour ||
@@ -221,14 +247,27 @@ function TourEditor({ tourId }) {
     const scene = sceneRef.current;
     const currentScene = tour.scenes[currentSceneIndex];
 
-    // Limpiar escena anterior
+    // Limpiar escena anterior completamente
     while (scene.children.length > 0) {
-      scene.remove(scene.children[0]);
+      const child = scene.children[0];
+      // Limpiar recursos de Three.js
+      if (child.geometry) child.geometry.dispose();
+      if (child.material) {
+        if (Array.isArray(child.material)) {
+          child.material.forEach(mat => mat.dispose());
+        } else {
+          child.material.dispose();
+        }
+      }
+      scene.remove(child);
     }
+    
+    // Limpiar referencias
+    hotspotSpritesRef.current = [];
     accessSpheresRef.current = [];
 
     // Crear esfera para la imagen 360 con mayor calidad visual
-    const geometry = new THREE.SphereGeometry(500, 128, 96); // Más segmentos para suavidad
+    const geometry = new THREE.SphereGeometry(500, 128, 96);
     geometry.scale(-1, 1, 1);
 
     const textureLoader = new THREE.TextureLoader();
@@ -239,14 +278,13 @@ function TourEditor({ tourId }) {
       texture => {
         texture.minFilter = THREE.LinearFilter;
         texture.magFilter = THREE.LinearFilter;
-        // Usar LinearSRGBColorSpace si está disponible, si no, omitir
         if (texture.colorSpace !== undefined && THREE.LinearSRGBColorSpace) {
           texture.colorSpace = THREE.LinearSRGBColorSpace;
         }
-        // Anisotropía para mayor nitidez
         if (rendererRef.current && rendererRef.current.capabilities.getMaxAnisotropy) {
           texture.anisotropy = Math.min(16, rendererRef.current.capabilities.getMaxAnisotropy());
         }
+        
         const material = new THREE.MeshBasicMaterial({
           map: texture,
           side: THREE.DoubleSide
@@ -254,53 +292,8 @@ function TourEditor({ tourId }) {
         const sphere = new THREE.Mesh(geometry, material);
         scene.add(sphere);
 
-        // --- Renderizar Hotspots ---
-        hotspotSpritesRef.current = [];
-        if (Array.isArray(currentScene.hotspots)) {
-          currentScene.hotspots.forEach(hotspot => {
-            // Convertir pitch/yaw a coordenadas cartesianas
-            const radius = 500;
-            const phi = THREE.MathUtils.degToRad(90 - hotspot.pitch);
-            const theta = THREE.MathUtils.degToRad(hotspot.yaw);
-            const x = radius * Math.sin(phi) * Math.sin(theta);
-            const y = radius * Math.cos(phi);
-            const z = radius * Math.sin(phi) * Math.cos(theta);
-            let obj3d;
-            if (hotspot.type === 'access') {
-              // Esfera 3D para access
-              const geometry = new THREE.SphereGeometry(12, 32, 32);
-              const material = new THREE.MeshStandardMaterial({ color: 0x38bdf8, emissive: 0x0ea5e9, metalness: 0.3, roughness: 0.5 });
-              obj3d = new THREE.Mesh(geometry, material);
-              obj3d.userData.hotspot = hotspot;
-              obj3d.userData.isAccessHotspot = true;
-              accessSpheresRef.current.push(obj3d);
-            } else {
-              // Sprite para otros tipos
-              const size = 64;
-              const canvas = document.createElement('canvas');
-              canvas.width = size;
-              canvas.height = size;
-              const ctx = canvas.getContext('2d');
-              ctx.beginPath();
-              ctx.arc(size/2, size/2, size/2-4, 0, 2*Math.PI);
-              ctx.fillStyle = '#38bdf8';
-              ctx.shadowColor = '#0ea5e9';
-              ctx.shadowBlur = 8;
-              ctx.fill();
-              ctx.lineWidth = 4;
-              ctx.strokeStyle = '#fff';
-              ctx.stroke();
-              const texture = new THREE.CanvasTexture(canvas);
-              const material = new THREE.SpriteMaterial({ map: texture, depthTest: false });
-              obj3d = new THREE.Sprite(material);
-              obj3d.scale.set(20, 20, 1);
-              obj3d.userData.hotspot = hotspot;
-            }
-            obj3d.position.set(x, y, z);
-            scene.add(obj3d);
-            hotspotSpritesRef.current.push(obj3d);
-          });
-        }
+        // --- Renderizar Hotspots con estado optimizado ---
+        renderHotspotsForScene(currentScene, scene);
       },
       undefined,
       err => {
@@ -312,76 +305,267 @@ function TourEditor({ tourId }) {
     );
   }, [tour, currentSceneIndex]);
 
-  // --- Detección de clics en hotspots ---
+  // Función de utilidad para depurar hotspots
+  const debugHotspots = (sceneData, sceneIndex) => {
+    if (!sceneData.hotspots || !Array.isArray(sceneData.hotspots)) {
+      console.log(`Escena ${sceneIndex}: No hay hotspots`);
+      return;
+    }
+    
+    console.log(`Escena ${sceneIndex} (${sceneData.name}):`, {
+      totalHotspots: sceneData.hotspots.length,
+      accessHotspots: sceneData.hotspots.filter(h => h.type === 'access').length,
+      commerceHotspots: sceneData.hotspots.filter(h => h.type === 'commerce').length,
+      locationHotspots: sceneData.hotspots.filter(h => h.type === 'location').length,
+      hotspots: sceneData.hotspots.map((h, i) => ({
+        index: i,
+        type: h.type,
+        pitch: h.pitch,
+        yaw: h.yaw,
+        targetSceneId: h.targetSceneId,
+        title: h.title
+      }))
+    });
+  };
+
+  // Función optimizada para renderizar hotspots
+  const renderHotspotsForScene = (sceneData, threeScene) => {
+    if (!Array.isArray(sceneData.hotspots) || sceneData.hotspots.length === 0) {
+      return;
+    }
+
+    // Validar y limpiar hotspots antes de renderizar
+    const validHotspots = sceneData.hotspots.filter((hotspot, index) => {
+      // Validar que el hotspot tenga las propiedades requeridas
+      if (!hotspot || typeof hotspot.pitch !== 'number' || typeof hotspot.yaw !== 'number') {
+        console.warn(`Hotspot inválido en índice ${index}:`, hotspot);
+        return false;
+      }
+      
+      // Validar que el hotspot de acceso tenga targetSceneId
+      if (hotspot.type === 'access' && !hotspot.targetSceneId) {
+        console.warn(`Hotspot de acceso sin targetSceneId en índice ${index}:`, hotspot);
+        return false;
+      }
+      
+      return true;
+    });
+
+    console.log(`Renderizando ${validHotspots.length} hotspots válidos para la escena ${currentSceneIndex}`);
+    
+    // Depurar hotspots para esta escena
+    debugHotspots(sceneData, currentSceneIndex);
+
+    validHotspots.forEach((hotspot, index) => {
+      try {
+        // Convertir pitch/yaw a coordenadas cartesianas
+        const radius = 500;
+        const phi = THREE.MathUtils.degToRad(90 - hotspot.pitch);
+        const theta = THREE.MathUtils.degToRad(hotspot.yaw);
+        const x = radius * Math.sin(phi) * Math.sin(theta);
+        const y = radius * Math.cos(phi);
+        const z = radius * Math.sin(phi) * Math.cos(theta);
+
+        let obj3d;
+        
+        if (hotspot.type === 'access') {
+          // Esfera 3D para access con mejor visualización
+          const geometry = new THREE.SphereGeometry(12, 32, 32);
+          const material = new THREE.MeshStandardMaterial({ 
+            color: 0x38bdf8, 
+            emissive: 0x0ea5e9, 
+            metalness: 0.3, 
+            roughness: 0.5 
+          });
+          obj3d = new THREE.Mesh(geometry, material);
+          
+          // Agregar información adicional al hotspot para mejor navegación
+          obj3d.userData.hotspot = { 
+            ...hotspot, 
+            sceneIndex: currentSceneIndex,
+            sceneName: sceneData.name
+          };
+          obj3d.userData.isAccessHotspot = true;
+          obj3d.userData.hotspotIndex = index;
+          accessSpheresRef.current.push(obj3d);
+        } else {
+          // Sprite para otros tipos con mejor diseño
+          const size = 64;
+          const canvas = document.createElement('canvas');
+          canvas.width = size;
+          canvas.height = size;
+          const ctx = canvas.getContext('2d');
+          
+          // Fondo con gradiente
+          const gradient = ctx.createRadialGradient(size/2, size/2, 0, size/2, size/2, size/2);
+          gradient.addColorStop(0, '#38bdf8');
+          gradient.addColorStop(1, '#0ea5e9');
+          ctx.fillStyle = gradient;
+          ctx.beginPath();
+          ctx.arc(size/2, size/2, size/2-4, 0, 2*Math.PI);
+          ctx.fill();
+          
+          // Borde blanco
+          ctx.lineWidth = 4;
+          ctx.strokeStyle = '#fff';
+          ctx.stroke();
+          
+          // Sombra
+          ctx.shadowColor = '#0ea5e9';
+          ctx.shadowBlur = 8;
+          
+          const texture = new THREE.CanvasTexture(canvas);
+          const material = new THREE.SpriteMaterial({ 
+            map: texture, 
+            depthTest: false,
+            transparent: true
+          });
+          obj3d = new THREE.Sprite(material);
+          obj3d.scale.set(20, 20, 1);
+          obj3d.userData.hotspot = { 
+            ...hotspot, 
+            sceneIndex: currentSceneIndex,
+            sceneName: sceneData.name
+          };
+          obj3d.userData.hotspotIndex = index;
+        }
+        
+        obj3d.position.set(x, y, z);
+        threeScene.add(obj3d);
+        hotspotSpritesRef.current.push(obj3d);
+        
+      } catch (error) {
+        console.error('Error renderizando hotspot:', error, hotspot);
+      }
+    });
+  };
+
+  // --- Detección de clics en hotspots optimizada ---
   useEffect(() => {
-    if (!rendererRef.current || !cameraRef.current || !sceneRef.current) return;
+    if (!rendererRef.current || !cameraRef.current || !sceneRef.current || !tour) return;
+    
     const dom = rendererRef.current.domElement;
     let lastClickTime = 0;
-    // 1. Comparación de IDs como string en la navegación de hotspots
+    
+    // Función optimizada para navegar a hotspots de acceso
     const doubleClickNavigateToAccessHotspot = (hotspot) => {
-      if (hotspot && hotspot.type === 'access' && hotspot.targetSceneId) {
-        const idx = tour.scenes.findIndex(s => String(s._id) === String(hotspot.targetSceneId));
-        if (idx !== -1) {
-          startTransition(idx);
-        }
+      if (!hotspot || hotspot.type !== 'access' || !hotspot.targetSceneId) {
+        console.log('Hotspot inválido para navegación:', hotspot);
+        return;
+      }
+      
+      // Buscar la escena destino usando diferentes métodos de comparación
+      let targetIdx = -1;
+      
+      // Método 1: Comparación directa de IDs
+      targetIdx = tour.scenes.findIndex(s => String(s._id) === String(hotspot.targetSceneId));
+      
+      // Método 2: Si no se encuentra, buscar por índice (fallback)
+      if (targetIdx === -1 && typeof hotspot.targetSceneId === 'number') {
+        targetIdx = hotspot.targetSceneId;
+      }
+      
+      // Método 3: Buscar por nombre de escena (fallback adicional)
+      if (targetIdx === -1 && hotspot.targetSceneName) {
+        targetIdx = tour.scenes.findIndex(s => s.name === hotspot.targetSceneName);
+      }
+      
+      if (targetIdx !== -1 && targetIdx < tour.scenes.length) {
+        console.log(`Navegando de escena ${currentSceneIndex} a escena ${targetIdx}`);
+        startTransition(targetIdx);
+      } else {
+        console.error('Escena destino no encontrada:', {
+          targetSceneId: hotspot.targetSceneId,
+          availableScenes: tour.scenes.map((s, i) => ({ index: i, id: s._id, name: s.name }))
+        });
       }
     };
+    
+    // Función optimizada para manejar clics en hotspots
     function onPointerDown(event) {
       // Solo click izquierdo
       if (event.button !== 0) return;
+      
       const rect = dom.getBoundingClientRect();
       const mouse = new THREE.Vector2(
         ((event.clientX - rect.left) / rect.width) * 2 - 1,
         -((event.clientY - rect.top) / rect.height) * 2 + 1
       );
+      
       const raycaster = new THREE.Raycaster();
       raycaster.setFromCamera(mouse, cameraRef.current);
-      const intersects = raycaster.intersectObjects(hotspotSpritesRef.current || [], true);
+      
+      // Usar todos los objetos de la escena actual para detectar hotspots
+      const intersects = raycaster.intersectObjects(sceneRef.current.children, true);
+      
       if (intersects.length > 0) {
         const obj = intersects[0].object;
         const now = Date.now();
-        if (obj.userData.isAccessHotspot) {
-          if (now - lastClickTime < 400) { // doble click
-            doubleClickNavigateToAccessHotspot(obj.userData.hotspot);
+        
+        // Verificar si es un hotspot
+        if (obj.userData && obj.userData.hotspot) {
+          const hotspot = obj.userData.hotspot;
+          
+          if (obj.userData.isAccessHotspot) {
+            if (now - lastClickTime < 400) { // doble click
+              console.log('Doble clic en hotspot de acceso:', hotspot);
+              doubleClickNavigateToAccessHotspot(hotspot);
+            }
+            lastClickTime = now;
+          } else {
+            console.log('Clic en hotspot informativo:', hotspot);
+            setSelectedHotspot(hotspot);
           }
-          lastClickTime = now;
-        } else if (obj.userData.hotspot) {
-          setSelectedHotspot(obj.userData.hotspot);
         }
       }
     }
+    
     dom.addEventListener('pointerdown', onPointerDown);
+    
     return () => {
       dom.removeEventListener('pointerdown', onPointerDown);
     };
-  }, [tour, currentSceneIndex]);
+  }, [tour, currentSceneIndex, hotspotSpritesRef.current]);
 
-  // Animación de transición
+  // Animación de transición optimizada
   function startTransition(targetIdx) {
     if (fade) return; // Evitar doble trigger
+    
+    console.log(`Iniciando transición de escena ${currentSceneIndex} a ${targetIdx}`);
+    
     setFade(true);
     setPendingSceneIndex(targetIdx);
+    
+    // Limpiar estados de hotspots antes de la transición
+    setSelectedHotspot(null);
+    setPlacementMode(false);
+    
     // Animar FOV (zoom in)
     const camera = cameraRef.current;
     if (!camera) return;
+    
     let startFov = camera.fov;
     let endFov = 35;
     let duration = 350;
     let start = null;
+    
     function animateZoomIn(ts) {
       if (!start) start = ts;
       let progress = Math.min((ts - start) / duration, 1);
       camera.fov = startFov + (endFov - startFov) * progress;
       camera.updateProjectionMatrix();
+      
       if (progress < 1) {
         requestAnimationFrame(animateZoomIn);
       } else {
         // Esperar un poco y luego cambiar escena
         setTimeout(() => {
+          console.log(`Cambiando a escena ${targetIdx}`);
           setCurrentSceneIndex(targetIdx);
         }, 200);
       }
     }
+    
     requestAnimationFrame(animateZoomIn);
   }
 
@@ -410,26 +594,34 @@ function TourEditor({ tourId }) {
   useEffect(() => {
     if (!sceneRef.current || !rendererRef.current || !cameraRef.current) return;
     if (!transitioning || !prevTexture) return;
+    
     // Crear geometría y materiales
     const geometry = new THREE.SphereGeometry(500, 128, 96);
     geometry.scale(-1, 1, 1);
     const currentScene = tour.scenes[pendingSceneIndex];
     const loader = new THREE.TextureLoader();
+    
     loader.load(getAbsoluteImageUrl(currentScene.image), nextTexture => {
       // Material de transición
       const material = RadialFadeMaterial(prevTexture, nextTexture, transitionProgress);
       const sphere = new THREE.Mesh(geometry, material);
       sceneRef.current.add(sphere);
+      
       // Render loop
       function renderTransition() {
         material.uniforms.uProgress.value = transitionProgress;
         rendererRef.current.render(sceneRef.current, cameraRef.current);
-        if (transitioning) requestAnimationFrame(renderTransition);
-        else sceneRef.current.remove(sphere);
+        
+        if (transitioning) {
+          requestAnimationFrame(renderTransition);
+        } else {
+          sceneRef.current.remove(sphere);
+        }
       }
+      
       renderTransition();
     });
-  }, [transitioning, transitionProgress]);
+  }, [transitioning, transitionProgress, pendingSceneIndex, tour]);
 
   // Cuando cambia la escena, hacer fade out y zoom out
   useEffect(() => {
@@ -506,83 +698,53 @@ function TourEditor({ tourId }) {
     }
   };
 
-  // Guardar hotspot
+  // Guardar hotspot optimizado
   const handleSaveHotspot = async (hotspotData) => {
     try {
+      console.log('Guardando hotspot:', hotspotData);
+      
       const updatedScenes = [...tour.scenes];
       const currentScene = updatedScenes[currentSceneIndex];
 
       if (hotspotData._id) {
+        // Actualizar hotspot existente
         const index = currentScene.hotspots.findIndex(h => h._id === hotspotData._id);
         if (index !== -1) {
-          currentScene.hotspots[index] = hotspotData;
+          currentScene.hotspots[index] = {
+            ...currentScene.hotspots[index],
+            ...hotspotData
+          };
         }
       } else {
-        currentScene.hotspots.push({
+        // Crear nuevo hotspot
+        const newHotspot = {
           ...hotspotData,
           _id: Date.now().toString()
-        });
+        };
+        currentScene.hotspots.push(newHotspot);
       }
 
       const updatedTour = { ...tour, scenes: updatedScenes };
       setTour(updatedTour);
+      
+      // Guardar en el backend
       await api.updateTour(tourId, updatedTour);
-      // Recarga el tour desde la API para asegurar sincronización
+      
+      // Recargar el tour desde la API para asegurar sincronización
       const response = await api.getTour(tourId);
-      setTour(response.data ? response.data : response);
+      const refreshedTour = response.data ? response.data : response;
+      setTour(refreshedTour);
+      
+      // Limpiar estados
       setSelectedHotspot(null);
-      setIsAddingHotspot(false);
+      setPlacementMode(false);
+      
+      console.log('Hotspot guardado exitosamente');
     } catch (err) {
       console.error('Error guardando hotspot:', err);
       alert(`Error al guardar: ${err.error || 'Intente nuevamente'}`);
     }
   };
-
-  // Manejar click en la esfera para añadir hotspot SOLO cuando isAddingHotspot es true
-  useEffect(() => {
-    if (!isAddingHotspot || !rendererRef.current || !sceneRef.current || !cameraRef.current) return;
-
-    const handlePointerDown = (event) => {
-      // Solo permitir click izquierdo
-      if (event.button !== 0) return;
-
-      // Evitar que el panel de control capture el click
-      if (event.target !== rendererRef.current.domElement) return;
-
-      // Obtener posición del click relativo al canvas
-      const rect = rendererRef.current.domElement.getBoundingClientRect();
-      const x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
-      const y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
-
-      // Vector 3D en la dirección de la cámara
-      const vector = new THREE.Vector3(x, y, 0.5).unproject(cameraRef.current);
-
-      // Convertir a coordenadas esféricas (pitch/yaw)
-      const camPos = cameraRef.current.position;
-      const dir = vector.sub(camPos).normalize();
-      const phi = Math.acos(dir.y); // [0, PI]
-      const theta = Math.atan2(dir.x, dir.z); // [-PI, PI]
-
-      // Convertir a grados
-      const pitch = 90 - (phi * 180 / Math.PI);
-      const yaw = theta * 180 / Math.PI;
-
-      setPendingHotspot({
-        pitch: Number(pitch.toFixed(2)),
-        yaw: Number(yaw.toFixed(2))
-      });
-      setIsAddingHotspot(false);
-    };
-
-    const dom = rendererRef.current.domElement;
-    dom.style.cursor = 'crosshair';
-    dom.addEventListener('pointerdown', handlePointerDown);
-
-    return () => {
-      dom.style.cursor = '';
-      dom.removeEventListener('pointerdown', handlePointerDown);
-    };
-  }, [isAddingHotspot, rendererRef, sceneRef, cameraRef]);
 
   // Nuevo: Guardar hotspot con pitch/yaw del click
   const handleSaveHotspotWithCoords = (hotspotData) => {
@@ -593,6 +755,21 @@ function TourEditor({ tourId }) {
     });
     setPendingHotspot(null);
   };
+
+  // Efecto unificado para manejar el modo de colocación de hotspots
+  useEffect(() => {
+    if (!rendererRef.current || !sceneRef.current || !cameraRef.current) return;
+
+    const dom = rendererRef.current.domElement;
+
+    if (placementMode) {
+      dom.style.cursor = 'crosshair';
+      // Elimina overlay visual, solo usa cursor
+      // El handler de click está en el canvas principal (ver más abajo)
+    } else {
+      dom.style.cursor = '';
+    }
+  }, [placementMode, rendererRef, sceneRef, cameraRef]);
 
   // Nuevo: Manejar click en la escena para colocar hotspot
   const handleSceneClick = (event) => {
@@ -621,28 +798,46 @@ function TourEditor({ tourId }) {
     }
   };
 
-  // Guardar el nuevo hotspot usando el endpoint REST
+  // Guardar el nuevo hotspot usando el endpoint REST optimizado
   const saveNewHotspot = async (hotspotData) => {
     try {
-      if (!tour || !tour.scenes || !tour.scenes[currentSceneIndex]) return;
+      console.log('Guardando nuevo hotspot:', hotspotData);
+      
+      if (!tour || !tour.scenes || !tour.scenes[currentSceneIndex]) {
+        throw new Error('Tour o escena no disponible');
+      }
+      
       const sceneId = tour.scenes[currentSceneIndex]._id;
       const response = await api.addHotspot(tour._id, sceneId, hotspotData);
-      // Solo guardar el objeto de datos, no la respuesta completa
+      
+      // Obtener el hotspot creado
       const newHotspot = response.data ? response.data : response;
+      console.log('Hotspot creado en backend:', newHotspot);
+      
+      // Actualizar el estado local
       const updatedTour = { ...tour };
       updatedTour.scenes = [...updatedTour.scenes];
       const scene = updatedTour.scenes[currentSceneIndex];
       scene.hotspots = [...scene.hotspots, newHotspot];
       setTour(updatedTour);
+      
+      // Limpiar estados
       setShowHotspotModal(false);
       setNewHotspotPosition(null);
-      // Recarga el tour desde la API para asegurar sincronización
+      setPlacementMode(false);
+      
+      // Recargar el tour desde la API para asegurar sincronización completa
       const refreshed = await api.getTour(tourId);
-      setTour(refreshed.data ? refreshed.data : refreshed);
+      const refreshedTour = refreshed.data ? refreshed.data : refreshed;
+      setTour(refreshedTour);
+      
+      console.log('Nuevo hotspot guardado exitosamente');
     } catch (error) {
-      alert('Error al guardar el hotspot');
+      console.error('Error al guardar el hotspot:', error);
+      alert(`Error al guardar el hotspot: ${error.message || 'Intente nuevamente'}`);
       setShowHotspotModal(false);
       setNewHotspotPosition(null);
+      setPlacementMode(false);
     }
   };
 
@@ -764,6 +959,10 @@ function TourEditor({ tourId }) {
           handleDragDropImage={handleDragDropImage}
           handleImageUpload={handleImageUpload}
           scenes={[]}
+          placementMode={placementMode}
+          setPlacementMode={setPlacementMode}
+          onReturn={() => navigate('/hub')}
+          handleDeleteHotspot={handleDeleteHotspot}
         />
       </div>
     );
@@ -786,7 +985,8 @@ function TourEditor({ tourId }) {
         scenes={tour.scenes}
         currentSceneIndex={currentSceneIndex}
         setCurrentSceneIndex={setCurrentSceneIndex}
-        setIsAddingHotspot={() => setPlacementMode(true)}
+        placementMode={placementMode}
+        setPlacementMode={setPlacementMode}
         onReturn={() => navigate('/hub')}
         handleDeleteHotspot={handleDeleteHotspot}
       />
@@ -797,7 +997,7 @@ function TourEditor({ tourId }) {
           onSave={pendingHotspot ? handleSaveHotspotWithCoords : handleSaveHotspot}
           onCancel={() => {
             setSelectedHotspot(null);
-            setIsAddingHotspot(false);
+            setPlacementMode(false);
             setPendingHotspot(null);
           }}
         />
@@ -828,7 +1028,8 @@ function ControlPanel({
   scenes,
   currentSceneIndex,
   setCurrentSceneIndex,
-  setIsAddingHotspot,
+  placementMode,
+  setPlacementMode,
   onReturn,
   handleDeleteHotspot
 }) {
@@ -912,29 +1113,144 @@ function ControlPanel({
               )}
             </div>
             <div className="panel-section">
-              <h3>Hotspots de la Escena</h3>
-              <ul className="panel-hotspot-list">
-                {scenes[currentSceneIndex].hotspots.map((hotspot, idx) => {
-                  let accessInfo = null;
-                  if (hotspot.type === 'access' && hotspot.targetSceneId) {
-                    const target = scenes.find(s => String(s._id) === String(hotspot.targetSceneId));
-                    accessInfo = target ? `→ ${target.name}` : '→ [Escena no encontrada]';
-                  }
-                  return (
-                    <li key={hotspot._id || idx} style={{display:'flex',alignItems:'center',justifyContent:'space-between',gap:8}}>
-                      <span>
-                        {hotspot.type === 'access' ? 'Punto de Acceso' : (hotspot.title || 'Hotspot')}
-                        {accessInfo && <span style={{color:'#38bdf8',marginLeft:8,fontSize:13}}>{accessInfo}</span>}
-                      </span>
-                      <button style={{background:'transparent',color:'#ef4444',border:'none',fontSize:18,cursor:'pointer'}} title="Eliminar hotspot" onClick={()=>{if(window.confirm('¿Eliminar este hotspot?'))handleDeleteHotspot(idx)}}>🗑️</button>
-                    </li>
-                  );
-                })}
-              </ul>
+              <h3>Hotspots de la Escena ({scenes[currentSceneIndex]?.hotspots?.length || 0})</h3>
+              <div className="hotspot-controls" style={{marginBottom: 15}}>
+                <button
+                  className="btn-add-hotspot"
+                  onClick={() => setPlacementMode(true)}
+                  title="Haz clic para activar el modo de colocación de hotspots. Luego haz clic en la imagen 360° donde quieras colocar el hotspot."
+                  style={{
+                    background: '#38bdf8',
+                    color: '#fff',
+                    border: 'none',
+                    borderRadius: 8,
+                    padding: '10px 16px',
+                    fontSize: '14px',
+                    fontWeight: 500,
+                    cursor: 'pointer',
+                    width: '100%',
+                    transition: 'background 0.2s',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: 8,
+                    position: 'relative'
+                  }}
+                  onMouseEnter={(e) => e.target.style.background = '#0ea5e9'}
+                  onMouseLeave={(e) => e.target.style.background = '#38bdf8'}
+                >
+                  <span style={{fontSize: '16px'}}>📍</span>
+                  Agregar Hotspot
+                </button>
+                {placementMode && (
+                  <div className="placement-mode-indicator">
+                    <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8}}>
+                      <strong>Modo de colocación activado</strong>
+                      <button
+                        onClick={() => setPlacementMode(false)}
+                        style={{
+                          background: 'transparent',
+                          border: '1px solid #ef4444',
+                          color: '#ef4444',
+                          borderRadius: 4,
+                          padding: '4px 8px',
+                          fontSize: '11px',
+                          cursor: 'pointer',
+                          transition: 'all 0.2s'
+                        }}
+                        onMouseEnter={(e) => {
+                          e.target.style.background = '#ef4444';
+                          e.target.style.color = '#fff';
+                        }}
+                        onMouseLeave={(e) => {
+                          e.target.style.background = 'transparent';
+                          e.target.style.color = '#ef4444';
+                        }}
+                      >
+                        Cancelar
+                      </button>
+                    </div>
+                    Haz clic en la imagen 360° para colocar el hotspot
+                  </div>
+                )}
+              </div>
+              {scenes[currentSceneIndex]?.hotspots?.length === 0 ? (
+                <div style={{
+                  background: '#1e293b',
+                  border: '1px dashed #334155',
+                  borderRadius: 6,
+                  padding: '20px',
+                  textAlign: 'center',
+                  color: '#64748b',
+                  fontSize: '14px'
+                }}>
+                  <div style={{fontSize: '24px', marginBottom: '8px'}}>📍</div>
+                  No hay hotspots en esta escena
+                  <div style={{fontSize: '12px', marginTop: '4px'}}>
+                    Haz clic en "Agregar Hotspot" para comenzar
+                  </div>
+                </div>
+              ) : (
+                <>
+                  {/* Resumen de tipos de hotspots */}
+                  <div style={{
+                    background: '#1e293b',
+                    border: '1px solid #334155',
+                    borderRadius: 6,
+                    padding: '8px 12px',
+                    marginBottom: '12px',
+                    fontSize: '12px',
+                    color: '#94a3b8'
+                  }}>
+                    {(() => {
+                      const hotspots = scenes[currentSceneIndex].hotspots;
+                      const types = {
+                        access: hotspots.filter(h => h.type === 'access').length,
+                        commerce: hotspots.filter(h => h.type === 'commerce').length,
+                        location: hotspots.filter(h => h.type === 'location').length
+                      };
+                      return (
+                        <div style={{display: 'flex', justifyContent: 'space-between'}}>
+                          <span>📍 Acceso: {types.access}</span>
+                          <span>🏪 Comercio: {types.commerce}</span>
+                          <span>📍 Locación: {types.location}</span>
+                        </div>
+                      );
+                    })()}
+                  </div>
+                  <ul className="panel-hotspot-list">
+                    {scenes[currentSceneIndex].hotspots.map((hotspot, idx) => {
+                      let accessInfo = null;
+                      if (hotspot.type === 'access' && hotspot.targetSceneId) {
+                        const target = scenes.find(s => String(s._id) === String(hotspot.targetSceneId));
+                        accessInfo = target ? `→ ${target.name}` : '→ [Escena no encontrada]';
+                      }
+                      return (
+                        <li key={hotspot._id || idx} style={{display:'flex',alignItems:'center',justifyContent:'space-between',gap:8}}>
+                          <span>
+                            {hotspot.type === 'access' ? 'Punto de Acceso' : (hotspot.title || 'Hotspot')}
+                            {accessInfo && <span style={{color:'#38bdf8',marginLeft:8,fontSize:13}}>{accessInfo}</span>}
+                          </span>
+                          <button style={{background:'transparent',color:'#ef4444',border:'none',fontSize:18,cursor:'pointer'}} title="Eliminar hotspot" onClick={()=>{if(window.confirm('¿Eliminar este hotspot?'))handleDeleteHotspot(idx)}}>🗑️</button>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </>
+              )}
             </div>
             <div className="panel-section panel-hint">
-              <p>Haz doble clic en un hotspot de tipo "Acceso" para navegar a la escena vinculada.</p>
-              <p>Usa Ctrl + clic para seleccionar múltiples hotspots.</p>
+              <p><strong>Tipos de Hotspots:</strong></p>
+              <ul style={{margin: '8px 0', paddingLeft: '20px', fontSize: '13px'}}>
+                <li><strong>📍 Acceso:</strong> Navega a otra escena del tour</li>
+                <li><strong>🏪 Comercio:</strong> Muestra información de un negocio</li>
+                <li><strong>📍 Locación:</strong> Muestra información de un lugar</li>
+              </ul>
+              <p style={{marginTop: '12px', fontSize: '13px'}}>
+                <strong>Controles:</strong><br/>
+                • Haz doble clic en hotspots de acceso para navegar<br/>
+                • Haz clic en hotspots para ver/editar información
+              </p>
             </div>
           </div>
         )}

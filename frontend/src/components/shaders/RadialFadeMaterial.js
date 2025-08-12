@@ -20,16 +20,38 @@ export default function RadialFadeMaterial(prevTexture, nextTexture, progress) {
       uniform sampler2D uNext;
       uniform float uProgress;
       varying vec2 vUv;
+      
       void main() {
-        // Centro de la imagen
+        // Transición de desplazamiento hacia adelante
+        // La imagen actual se desvanece hacia adelante (zoom out + fade)
+        // La nueva imagen aparece desde atrás (zoom in + fade in)
+        
         vec2 center = vec2(0.5, 0.5);
         float dist = distance(vUv, center);
-        // Estiramiento radial: cuanto más lejos del centro, más rápido transiciona
-        float radial = smoothstep(0.0, 0.7, dist + uProgress * 0.7);
-        float blend = smoothstep(0.0, 1.0, uProgress * 1.2 + radial * 0.8);
+        
+        // Efecto de desplazamiento hacia adelante para la imagen actual
+        float currentImageFade = 1.0 - smoothstep(0.0, 0.7, uProgress);
+        
+        // Efecto de aparición desde atrás para la nueva imagen
+        float newImageFade = smoothstep(0.3, 1.0, uProgress);
+        
+        // Coordenadas UV con efecto de desplazamiento hacia adelante
+        vec2 offset = (vUv - center) * (1.0 + uProgress * 0.4);
+        vec2 newUv = center + offset;
+        
+        // Verificar que las coordenadas estén dentro de los límites
+        if (newUv.x < 0.0 || newUv.x > 1.0 || newUv.y < 0.0 || newUv.y > 1.0) {
+          newUv = vUv; // Usar coordenadas originales si están fuera de rango
+        }
+        
+        // Muestrear las texturas
         vec4 prevColor = texture2D(uPrev, vUv);
-        vec4 nextColor = texture2D(uNext, vUv);
-        // Fundido cruzado
+        vec4 nextColor = texture2D(uNext, newUv);
+        
+        // Aplicar efectos de transición con easing suave
+        float blend = mix(currentImageFade, newImageFade, uProgress);
+        
+        // Combinar las imágenes con el efecto de desplazamiento
         gl_FragColor = mix(prevColor, nextColor, blend);
       }
     `,
@@ -37,4 +59,4 @@ export default function RadialFadeMaterial(prevTexture, nextTexture, progress) {
     depthTest: false,
     depthWrite: false,
   });
-} 
+}

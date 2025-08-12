@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Search, MapPin, Star, ShoppingCart, Camera, Navigation, Store, Heart } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { useCart } from '../../context/CartContext';
 import './Comercios360.css';
 
 const featuredStores = [
@@ -63,6 +64,8 @@ const Comercios360 = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [activeTab, setActiveTab] = useState("discover");
   const navigate = useNavigate();
+  const { getTotalItems, setIsOpen } = useCart();
+  const totalItems = getTotalItems();
 
   const handleStoreClick = (storeId) => {
     // Navegar al viewer del tour 360
@@ -83,9 +86,9 @@ const Comercios360 = () => {
               <button className="icon-button">
                 <Heart className="icon" />
               </button>
-              <button className="icon-button cart-button">
+              <button className="icon-button cart-button" onClick={() => setIsOpen(true)}>
                 <ShoppingCart className="icon" />
-                <span className="cart-badge">3</span>
+                <span className="cart-badge">{totalItems}</span>
               </button>
             </div>
           </div>
@@ -281,10 +284,10 @@ const Comercios360 = () => {
             <Navigation className="nav-icon" />
             <span className="nav-text">Mapa</span>
           </button>
-          <button className="nav-button cart-nav">
+          <button className="nav-button cart-nav" onClick={() => setIsOpen(true)}>
             <ShoppingCart className="nav-icon" />
             <span className="nav-text">Carrito</span>
-            <span className="cart-badge-nav">3</span>
+            <span className="cart-badge-nav">{totalItems}</span>
           </button>
         </div>
       </div>
@@ -295,4 +298,4 @@ const Comercios360 = () => {
   );
 };
 
-export default Comercios360; 
+export default Comercios360;

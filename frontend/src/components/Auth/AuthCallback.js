@@ -23,11 +23,8 @@ function AuthCallback() {
       try {
         const user = JSON.parse(decodeURIComponent(userStr));
         
-        // Guardar token en localStorage
-        localStorage.setItem('authToken', token);
-        
-        // Guardar usuario en contexto
-        login(user);
+        // Guardar usuario y token en contexto
+        login(user, token);
         
         // Redirigir al hub
         navigate('/hub');

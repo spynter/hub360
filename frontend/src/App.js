@@ -12,8 +12,11 @@ import Login from './components/Auth/Login';
 import Register from './components/Auth/Register';
 import AuthCallback from './components/Auth/AuthCallback';
 import Comercios360 from './components/Comercios360/Comercios360';
+import ProtectedRoute from './components/ProtectedRoute/ProtectedRoute';
 import { UserProvider } from './context/UserContext';
+import { CartProvider } from './context/CartContext';
 import UserCircle from './components/UserCircle';
+import Cart from './components/Cart/Cart';
 import './App.css';
 
 function TourEditorWrapper() {
@@ -47,24 +50,39 @@ function LayoutWithUser({ children }) {
 function App() {
   return (
     <UserProvider>
-      <Router>
-        <LayoutWithUser>
-          <Routes>
-            <Route path="/login" element={<Login />} />
-            <Route path="/register" element={<Register />} />
-            <Route path="/auth/callback" element={<AuthCallback />} />
-            <Route path="/" element={<LandingPage />} />
-            <Route path="/comercios360" element={<Comercios360 />} />
-            <Route path="/map" element={<LandingMap />} />
-            <Route path="/hub" element={<Hub />} />
-            <Route path="/editor/:tourId" element={<TourEditorWrapper />} />
-            <Route path="/viewer/:tourId" element={<TourViewer />} />
-            <Route path="/embed/:apiKey" element={<EmbedPage />} />
-            <Route path="/shop" element={<Shop />} />
-            <Route path="/shop/:tourId" element={<ShopWrapper />} />
-          </Routes>
-        </LayoutWithUser>
-      </Router>
+      <CartProvider>
+        <Router>
+          <LayoutWithUser>
+            <Routes>
+              <Route path="/login" element={<Login />} />
+              <Route path="/register" element={<Register />} />
+              <Route path="/auth/callback" element={<AuthCallback />} />
+              <Route path="/" element={<LandingPage />} />
+              <Route path="/comercios360" element={<Comercios360 />} />
+              <Route path="/map" element={<LandingMap />} />
+              
+              {/* Rutas protegidas que requieren rol de admin */}
+              <Route path="/hub" element={
+                <ProtectedRoute requireAdmin={true}>
+                  <Hub />
+                </ProtectedRoute>
+              } />
+              <Route path="/editor/:tourId" element={
+                <ProtectedRoute requireAdmin={true}>
+                  <TourEditorWrapper />
+                </ProtectedRoute>
+              } />
+              
+              {/* Rutas públicas */}
+              <Route path="/viewer/:tourId" element={<TourViewer />} />
+              <Route path="/embed/:apiKey" element={<EmbedPage />} />
+              <Route path="/shop" element={<Shop />} />
+              <Route path="/shop/:tourId" element={<ShopWrapper />} />
+            </Routes>
+            <Cart />
+          </LayoutWithUser>
+        </Router>
+      </CartProvider>
     </UserProvider>
   );
 }

@@ -3,8 +3,9 @@ const router = express.Router();
 const passport = require('passport');
 const authController = require('../controllers/authController');
 const auth = require('../middleware/auth');
+const adminAuth = require('../middleware/adminAuth');
 
-// Rutas de autenticación local
+// Rutas de autenticación
 router.post('/register', authController.register);
 router.post('/login', authController.login);
 
@@ -24,5 +25,13 @@ router.get('/facebook/callback',
 
 // Ruta para obtener usuario actual (requiere autenticación)
 router.get('/me', auth, authController.getCurrentUser);
+
+// Ruta para verificar acceso de admin
+router.get('/verify-admin', adminAuth, (req, res) => {
+  res.json({ 
+    message: 'Acceso de administrador verificado',
+    user: req.user 
+  });
+});
 
 module.exports = router;

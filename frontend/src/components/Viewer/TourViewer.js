@@ -125,6 +125,8 @@ function TourViewer() {
     let controls = new OrbitControls(camera, renderer.domElement);
     controls.enableDamping = true;
     controls.dampingFactor = 0.05;
+    // Invertir dirección de rotación horizontal para que coincida con TourEditor.js
+    controls.rotateSpeed = -0.5;
     // Soporte de zoom con scroll del mouse
     controls.enableZoom = true;
     controls.minDistance = 0.05;
@@ -296,6 +298,9 @@ function TourViewer() {
     if (transitioning) return; // Evitar doble trigger
     const scene = sceneRef.current;
     const renderer = rendererRef.current;
+    
+    console.log(`Iniciando transición de escena ${currentSceneIndex} a ${targetIdx}`);
+    
     // Capturar textura de la escena actual
     const renderTarget = new THREE.WebGLRenderTarget(
       renderer.domElement.width,
@@ -308,6 +313,29 @@ function TourViewer() {
     setTransitioning(true);
     setTransitionProgress(0);
     setPendingSceneIndex(targetIdx);
+    
+    // Iniciar animación de transición
+    let startTime = Date.now();
+    const duration = 800; // Duración de la transición en ms
+    
+    function animateTransition() {
+      const elapsed = Date.now() - startTime;
+      const progress = Math.min(elapsed / duration, 1);
+      
+      setTransitionProgress(progress);
+      
+      if (progress < 1) {
+        requestAnimationFrame(animateTransition);
+      } else {
+        // Transición completada
+        setTransitioning(false);
+        setPrevTexture(null);
+        setCurrentSceneIndex(targetIdx);
+        setPendingSceneIndex(null);
+      }
+    }
+    
+    requestAnimationFrame(animateTransition);
   }
 
   // Cuando cambia la escena, hacer fade out y zoom out
@@ -337,26 +365,35 @@ function TourViewer() {
     }, 250);
   }, [currentSceneIndex]);
 
+  // Modificar render de la escena para usar el shader durante la transición
   useEffect(() => {
     if (!sceneRef.current || !rendererRef.current || !cameraRef.current) return;
     if (!transitioning || !prevTexture) return;
+    
     const geometry = new THREE.SphereGeometry(500, 128, 96);
     geometry.scale(-1, 1, 1);
     const currentScene = tour.scenes[pendingSceneIndex];
     const loader = new THREE.TextureLoader();
+    
     loader.load(getAbsoluteImageUrl(currentScene.image), nextTexture => {
       const material = RadialFadeMaterial(prevTexture, nextTexture, transitionProgress);
       const sphere = new THREE.Mesh(geometry, material);
       sceneRef.current.add(sphere);
+      
       function renderTransition() {
         material.uniforms.uProgress.value = transitionProgress;
         rendererRef.current.render(sceneRef.current, cameraRef.current);
-        if (transitioning) requestAnimationFrame(renderTransition);
-        else sceneRef.current.remove(sphere);
+        
+        if (transitioning) {
+          requestAnimationFrame(renderTransition);
+        } else {
+          sceneRef.current.remove(sphere);
+        }
       }
+      
       renderTransition();
     });
-  }, [transitioning, transitionProgress]);
+  }, [transitioning, transitionProgress, pendingSceneIndex, tour]);
 
   if (loading) {
     return <div className="viewer-loading">Cargando tour...</div>;

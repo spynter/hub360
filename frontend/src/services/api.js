@@ -4,12 +4,14 @@ const api = axios.create({
   baseURL: process.env.REACT_APP_API_URL || 'http://localhost:5000/api',
 });
 
+// Variable para almacenar el token actual
+let authToken = null;
+
 // Interceptor para agregar token JWT a las peticiones
 api.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('authToken');
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
+    if (authToken) {
+      config.headers.Authorization = `Bearer ${authToken}`;
     }
     return config;
   },
@@ -24,17 +26,47 @@ api.interceptors.response.use(
   error => {
     console.error('API Error:', error.response?.data || error.message);
     
-    // Si el token es inválido, redirigir al login
+    // Si el token es inválido, limpiar datos locales
     if (error.response?.status === 401) {
-      localStorage.removeItem('authToken');
-      window.location.href = '/login';
+      authToken = null;
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      
+      // Solo redirigir si no estamos en la página de login
+      if (!window.location.pathname.includes('/login')) {
+        window.location.href = '/login';
+      }
     }
     
     return Promise.reject(error);
   }
 );
 
+// Métodos para manejar el token de autenticación
+const setAuthToken = (token) => {
+  authToken = token;
+  if (token) {
+    localStorage.setItem('token', token);
+  } else {
+    localStorage.removeItem('token');
+  }
+};
+
+const removeAuthToken = () => {
+  authToken = null;
+  localStorage.removeItem('token');
+};
+
+const getAuthToken = () => {
+  return authToken || localStorage.getItem('token');
+};
+
 export default {
+  // Métodos de autenticación
+  setAuthToken,
+  removeAuthToken,
+  getAuthToken,
+  
   // Operaciones CRUD para tours
   getTours: () => api.get('/tours'),
   getTour: (id) => api.get(`/tours/${id}`),
@@ -47,7 +79,14 @@ export default {
     const formData = new FormData();
     formData.append('image', file);
     return api.post('/upload', formData, {
-      headers: { 'Content-Type': 'multipart/form-data' }
+      headers: { 
+        'Content-Type': 'multipart/form-data'
+      },
+      timeout: 30000, // 30 segundos de timeout
+      onUploadProgress: (progressEvent) => {
+        const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+        console.log('Progreso de upload:', percentCompleted + '%');
+      }
     });
   },
 
@@ -73,4 +112,10 @@ export default {
   // Autenticación
   register: (userData) => api.post('/auth/register', userData),
   login: (loginData) => api.post('/auth/login', loginData),
+  
+  // Verificar usuario actual
+  getCurrentUser: () => api.get('/auth/me'),
+  
+  // Verificar si el usuario es admin
+  verifyAdminAccess: () => api.get('/auth/verify-admin'),
 };

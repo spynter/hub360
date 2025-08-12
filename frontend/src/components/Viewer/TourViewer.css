@@ -97,19 +97,45 @@
   transform: scale(1.04);
 }
 
+/* Estilos para transiciones suaves */
+.transition-container {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+.transition-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: radial-gradient(circle at center, transparent 0%, rgba(0,0,0,0.1) 100%);
+  pointer-events: none;
+  z-index: 50;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.transition-overlay.active {
+  opacity: 1;
+}
+
+/* Mejoras en el fade-overlay existente */
 .fade-overlay {
   position: absolute;
   top: 0; left: 0; right: 0; bottom: 0;
   width: 100vw;
   height: 100vh;
-  background: #000;
+  background: radial-gradient(circle at center, rgba(0,0,0,0.3) 0%, rgba(0,0,0,0.8) 100%);
   opacity: 0;
   pointer-events: none;
   z-index: 100;
   transition: opacity 0.45s cubic-bezier(.4,2,.6,1);
 }
+
 .fade-overlay.visible {
-  opacity: 0.85;
+  opacity: 1;
   pointer-events: all;
 } 
 /* Gyroscope controls */
@@ -159,4 +185,93 @@
     height: 35px;
     font-size: 1rem;
   }
+}
+
+embedviewer.css
+
+
+
+.embed-viewer {
+  width: 100vw;
+  height: 100vh;
+  position: relative;
+  background: #181c23;
+}
+
+.three-container {
+  width: 100vw;
+  height: 100vh;
+  position: absolute;
+  top: 0; left: 0;
+  z-index: 1;
+}
+
+.scene-selector {
+  position: absolute;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 10;
+  display: flex;
+  gap: 12px;
+}
+
+.scene-btn {
+  background: #23272f;
+  color: #38bdf8;
+  border: none;
+  border-radius: 6px;
+  padding: 8px 18px;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+}
+
+.scene-btn.active,
+.scene-btn:hover {
+  background: #38bdf8;
+  color: #181c23;
+}
+
+/* Estilos para transiciones suaves */
+.transition-container {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+.transition-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: radial-gradient(circle at center, transparent 0%, rgba(0,0,0,0.1) 100%);
+  pointer-events: none;
+  z-index: 50;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.transition-overlay.active {
+  opacity: 1;
+}
+
+/* Mejoras en el fade-overlay existente */
+.fade-overlay {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  width: 100vw;
+  height: 100vh;
+  background: radial-gradient(circle at center, rgba(0,0,0,0.3) 0%, rgba(0,0,0,0.8) 100%);
+  opacity: 0;
+  pointer-events: none;
+  z-index: 100;
+  transition: opacity 0.45s cubic-bezier(.4,2,.6,1);
+}
+
+.fade-overlay.visible {
+  opacity: 1;
+  pointer-events: all;
 }

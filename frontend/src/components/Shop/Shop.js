@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useCart } from '../../context/CartContext';
 import './Shop.css';
 
 // Utilidad para obtener la URL absoluta de la imagen
@@ -13,8 +14,8 @@ function getAbsoluteImageUrl(image) {
 function Shop({ tourId }) {
   const [products, setProducts] = useState([]);
   const [tour, setTour] = useState(null);
-  const [cart, setCart] = useState({});
   const [loading, setLoading] = useState(true);
+  const { addToCart } = useCart();
 
   useEffect(() => {
     async function fetchData() {
@@ -41,94 +42,103 @@ function Shop({ tourId }) {
     if (tourId) fetchData();
   }, [tourId]);
 
-  const handleQuantityChange = (productId, value) => {
-    setCart(prev => ({
-      ...prev,
-      [productId]: {
-        ...prev[productId],
-        quantity: Math.max(1, Number(value) || 1)
-      }
-    }));
-  };
-
   const handleAddToCart = (product) => {
-    setCart(prev => ({
-      ...prev,
-      [product._id]: {
-        ...product,
-        quantity: prev[product._id]?.quantity || 1
-      }
-    }));
+    addToCart(product, tourId, 1);
+    // Mostrar confirmación
+    alert(`¡${product.name} agregado al carrito!`);
   };
 
-  if (loading) return <div className="shop-loading">Cargando tienda...</div>;
+  if (loading) return (
+    <div className="shop-loading">
+      <div className="loading-spinner"></div>
+      <p>Cargando tienda...</p>
+    </div>
+  );
 
   return (
     <div className="shop-container">
-      <button
-        className="shop-back-btn"
-        style={{
-          marginBottom: 24,
-          background: '#23272f',
-          color: '#38bdf8',
-          border: 'none',
-          borderRadius: 8,
-          padding: '10px 20px',
-          fontSize: '1rem',
-          fontWeight: 500,
-          cursor: 'pointer',
-          transition: 'background 0.2s, color 0.2s'
-        }}
-        onClick={() => window.history.back()}
-      >
-        ← Volver
-      </button>
-      <h1 className="shop-title">{tour?.name ? `Tienda: ${tour.name}` : 'Tienda'}</h1>
-      <div className="shop-grid">
+      {/* Header con navegación */}
+      <header className="shop-header">
+        <button
+          className="shop-back-btn"
+          onClick={() => window.history.back()}
+        >
+          ← Volver
+        </button>
+        <div className="shop-header-info">
+          <h1 className="shop-title">{tour?.name || 'Tienda'}</h1>
+          <p className="shop-subtitle">Descubre nuestros productos</p>
+        </div>
+      </header>
+
+      {/* Banner de la tienda */}
+      <div className="shop-banner">
+        <div className="shop-banner-content">
+          <div className="shop-banner-text">
+            <h2>{tour?.name || 'Tienda'}</h2>
+            <p>{tour?.description || 'Explora nuestra selección de productos de calidad'}</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Contenido principal */}
+      <main className="shop-main">
         {products.length === 0 ? (
-          <div style={{ color: '#a3a3a3', fontSize: '1.1rem', gridColumn: '1/-1', textAlign: 'center', padding: 32 }}>
-            No hay productos en esta tienda.
+          <div className="shop-empty-state">
+            <div className="empty-state-icon">🛍️</div>
+            <h3>No hay productos disponibles</h3>
+            <p>Esta tienda aún no tiene productos. Vuelve más tarde.</p>
           </div>
         ) : (
-          products.map(product => (
-            <div className="shop-card" key={product._id}>
-              <div className="shop-card-image">
-                <img
-                  src={getAbsoluteImageUrl(product.image)}
-                  alt={product.name}
-                  onError={e => { e.target.src = 'https://via.placeholder.com/300x180?text=Sin+Imagen'; }}
-                />
-              </div>
-              <div className="shop-card-content">
-                <h2 className="shop-card-title">{product.name}</h2>
-                <p className="shop-card-desc">{product.description}</p>
-                <div className="shop-card-price">${product.price.toFixed(2)}</div>
-                <div className="shop-card-actions">
-                  <input
-                    type="number"
-                    min="1"
-                    className="shop-qty-input"
-                    value={cart[product._id]?.quantity || 1}
-                    onChange={e => handleQuantityChange(product._id, e.target.value)}
-                  />
-                  <button
-                    className="shop-add-btn"
-                    onClick={() => handleAddToCart(product)}
-                  >
-                    Añadir al carrito
-                  </button>
-                </div>
-              </div>
+          <>
+            {/* Información de productos */}
+            <div className="shop-products-info">
+              <h3>Productos ({products.length})</h3>
+              <p>Selecciona los productos que deseas agregar a tu carrito</p>
             </div>
-          ))
+
+            {/* Grid de productos */}
+            <div className="shop-products-grid">
+              {products.map(product => (
+                <div className="shop-product-card" key={product._id}>
+                  <div className="product-image-container">
+                    <img
+                      src={getAbsoluteImageUrl(product.image)}
+                      alt={product.name}
+                      className="product-image"
+                      onError={e => { 
+                        e.target.src = 'https://via.placeholder.com/300x300/23272f/38bdf8?text=Sin+Imagen'; 
+                      }}
+                    />
+                    <div className="product-overlay">
+                      <button
+                        className="product-quick-add"
+                        onClick={() => handleAddToCart(product)}
+                      >
+                        + Agregar
+                      </button>
+                    </div>
+                  </div>
+                  
+                  <div className="product-content">
+                    <h3 className="product-name">{product.name}</h3>
+                    <p className="product-description">{product.description}</p>
+                    <div className="product-footer">
+                      <span className="product-price">${product.price.toFixed(2)}</span>
+                      <button
+                        className="product-add-btn"
+                        onClick={() => handleAddToCart(product)}
+                      >
+                        Agregar al carrito
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </>
         )}
-      </div>
-      <div className="shop-cart-float">
-        <span>🛒</span>
-        <span>
-          {Object.values(cart).reduce((acc, item) => acc + (item.quantity || 1), 0)} productos
-        </span>
-      </div>
+      </main>
     </div>
   );
 }

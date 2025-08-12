@@ -215,7 +215,7 @@ function LandingMap() {
             <div className="floating-card-header">
               <div style={{flex:1}}></div>
               <button className="floating-card-btn" onClick={handleClosePanel} title="Cerrar">✖</button>
-              <button className="floating-card-btn" onClick={() => navigate(`/tienda/${selectedTour._id}`)} title="Ir a tienda">
+              <button className="floating-card-btn" onClick={() => navigate(`/shop/${selectedTour._id}`)} title="Ir a tienda">
                 <span role="img" aria-label="Tienda">🛒</span>
               </button>
             </div>
