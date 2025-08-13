@@ -25,9 +25,9 @@ app.use(cors({
     const allowedOrigins = [
       process.env.FRONTEND_URL || 'http://localhost:3000',
       'https://6z8k0j86-3000.use2.devtunnels.ms',
-      'https://6z8k0j86-5000.use2.devtunnels.ms',
-      'https://6z8k0j86-5000.use2.devtunnels.ms/api',
-      'https://6z8k0j86-5000.use2.devtunnels.ms/api/tours',
+      'https://turpialview-backend.onrender.com',
+      'https://turpialview-backend.onrender.com/api',
+      'https://turpialview-backend.onrender.com/api/tours',
     ];
     
     // Verificar si el origin está en la lista de permitidos
@@ -36,7 +36,7 @@ app.use(cors({
     }
     
     // Permitir cualquier subdominio de devtunnels.ms
-    if (origin.includes('devtunnels.ms')) {
+    if (origin.includes('onrender.com')) {
       return callback(null, true);
     }
     
@@ -64,10 +64,10 @@ app.use((req, res, next) => {
   const allowedOrigins = [
     process.env.FRONTEND_URL || 'http://localhost:3000',
     'https://6z8k0j86-3000.use2.devtunnels.ms',
-    'https://6z8k0j86-5000.use2.devtunnels.ms'
+    'https://turpialview-backend.onrender.com'
   ];
   
-  if (origin && (allowedOrigins.includes(origin) || origin.includes('devtunnels.ms'))) {
+  if (origin && (allowedOrigins.includes(origin) || origin.includes('onrender.com'))) {
     res.header('Access-Control-Allow-Origin', origin);
   }
   
