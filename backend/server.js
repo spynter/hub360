@@ -19,9 +19,9 @@ dontenv.config();
 // Middleware
 app.use(cors({
   origin: function (origin, callback) {
-    // Permitir requests sin origin (como mobile apps o Postman)
-    if (!origin) return callback(null, true);
-    
+    // Permitir requests sin origin o con origin 'null' (file://, apps móviles)
+    if (!origin || origin === 'null') return callback(null, true);
+
     const allowedOrigins = [
       process.env.FRONTEND_URL || 'http://localhost:3000',
       'https://6z8k0j86-3000.use2.devtunnels.ms',
@@ -29,17 +29,12 @@ app.use(cors({
       'https://turpialview-backend.onrender.com/api',
       'https://turpialview-backend.onrender.com/api/tours',
     ];
-    
-    // Verificar si el origin está en la lista de permitidos
-    if (allowedOrigins.includes(origin)) {
+
+    // Verificar si el origin está en la lista de permitidos o es onrender.com
+    if (allowedOrigins.includes(origin) || origin.includes('onrender.com')) {
       return callback(null, true);
     }
-    
-    // Permitir cualquier subdominio de devtunnels.ms
-    if (origin.includes('onrender.com')) {
-      return callback(null, true);
-    }
-    
+
     callback(new Error('Not allowed by CORS'));
   },
   credentials: true,
@@ -83,7 +78,12 @@ app.use((req, res, next) => {
 });
 
 app.use(express.json());
-app.use('/uploads', express.static('uploads')); // Servir archivos estáticos
+// Servir archivos estáticos con CORS abierto para permitir texturas desde file://
+app.use('/uploads', (req, res, next) => {
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Cross-Origin-Resource-Policy', 'cross-origin');
+  next();
+}, express.static('uploads'));
 
 // Conectar a MongoDB
 connectDB();
